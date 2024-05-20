@@ -32,7 +32,10 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
 	local addedUrls = {}
 	local data = readAll(file)
 	print("Read data\n")
-	if url:match("https://n1nzo2oxji%.execute%-api%.us%-east%-1%.amazonaws%.com/prod/private/posts/[^/]+/comments%?limit=10") then
+	local pat = "https://n1nzo2oxji%.execute%-api%.us%-east%-1%.amazonaws%.com/prod/private/posts/[^/]+/comments%?limit=10.*"
+	local mpat = "https://n1nzo2oxji%.execute%-api%.us%-east%-1%.amazonaws%.com/prod/private/posts/([^/]+)/comments%?limit=10.*"
+	if url:match(pat) then
+		local post_id = string.match(url, mpat)
 		local count = 0
 		io.stderr:write("This is a comment endpoint\n")
 		local decoded = JSON:decode(data)
@@ -48,6 +51,10 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
 			print(table.show(count, "Count"))
 			print("\n")
 			os.exit(100)
+		end
+		local key = decoded["lastEvaluatedKey"]
+		if key then
+			table.insert(addedUrls, {url = "https://n1nzo2oxji.execute-api.us-east-1.amazonaws.com/prod/private/posts/"..post_id.."/comments?limit=10&exclusiveStartKey="..key})
 		end
 		local container = {items = discoveredPosts}
 		local new_items = JSON:encode(container)

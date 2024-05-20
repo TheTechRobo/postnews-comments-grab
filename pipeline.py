@@ -28,7 +28,7 @@ project = Project()
 #
 # Update this each time you make a non-cosmetic change.
 # It will be added to the WARC files and reported to the tracker.
-VERSION = '20240520.04'
+VERSION = '20240520.05'
 #USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.183 Safari/537.36'
 TRACKER_ID = 'postnews'
 TRACKER_HOST = '172.17.0.1'
@@ -191,10 +191,12 @@ class WgetArgs(object):
         item_urls = []
         custom_items = {}
 
+        assert len(item['item_name'].split("\0")) == 1
         for item_name in item['item_name'].split('\0'):
             wget_args.extend(['--warc-header', 'x-wget-at-project-item-name: '+item_name])
             wget_args.append('item-name://'+item_name)
             itemType, itemValue = item_name.split(':', 1)
+            item['post_id'] = itemValue
             if itemType == "post":
                 url = 'https://n1nzo2oxji.execute-api.us-east-1.amazonaws.com/prod/private/posts/%s/comments?limit=10' % itemValue
             else:
