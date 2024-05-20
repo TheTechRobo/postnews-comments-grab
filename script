@@ -1,0 +1,2 @@
+docker build -t img . || exit 4
+docker run -v "/home/thetechrobo/postnewscomments-grab/data:/finished" --rm img TheTechRobo --concurrent 1
