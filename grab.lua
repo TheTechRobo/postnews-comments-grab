@@ -17,6 +17,15 @@ end
 
 wget.callbacks.httploop_result = function(url, err, http_stat)
 	io.stderr:write(http_stat["statcode"] .. " " .. url["url"] .. "\n")
+	if http_stat["statcode"] == 401 then
+		io.stderr:write(" *** Authorization expired. Sleeping 72000 seconds. Replace authorization file contents.\n\n")
+		io.stderr:flush()
+		os.execute("sleep 72000")
+		return wget.actions.ABORT
+	end
+	if http_stat["statcode"] ~= 200 then
+		return wget.actions.ABORT
+	end
 end
 
 wget.callbacks.get_urls = function(file, url, is_css, iri)
