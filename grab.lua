@@ -53,6 +53,7 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
 		print("Submitted URLs to backfeed.")
 	else
 		print("Unknown url format")
+		os.exit(106)
 	end
 	io.stderr:write(table.show(addedUrls, "Added URLs"))
 	return addedUrls
