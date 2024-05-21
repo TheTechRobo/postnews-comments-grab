@@ -16,7 +16,7 @@ function startswith(text, prefix)
 end
 
 wget.callbacks.httploop_result = function(url, err, http_stat)
-	os.execute("sleep 1")
+	--os.execute("sleep 1"i)
 	io.stderr:write(http_stat["statcode"] .. " " .. url["url"] .. "\n")
 	if http_stat["statcode"] == 401 then
 		io.stderr:write(" *** Authorization expired. Sleeping 72000 seconds. Replace authorization file contents.\n\n")
