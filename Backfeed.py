@@ -11,6 +11,9 @@ def hello():
         print("hello")
         print(request.data)
         abort(400)
+    if not request.json['items']:
+        # no items received
+        return "OK"
     print(request.json)
     a = request.json['items']
     with open("items", "a+") as file:
