@@ -61,7 +61,7 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
 		local new_items = JSON:encode(container)
 		print("New items", new_items)
 		print("Submitting to backfeed")
-		local body, code, headers, status = http.request("http://172.17.0.1:5000/", new_items)
+		local body, code, headers, status = http.request("http://host.docker.internal:5000/", new_items)
 		print(body)
 		if code ~= 200 then
 			print("*** Failed to submit URLs to backfeed!")
