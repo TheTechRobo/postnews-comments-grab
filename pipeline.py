@@ -28,7 +28,7 @@ project = Project()
 #
 # Update this each time you make a non-cosmetic change.
 # It will be added to the WARC files and reported to the tracker.
-VERSION = '20240522.02'
+VERSION = '20240522.03'
 #USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.183 Safari/537.36'
 TRACKER_ID = 'postnews'
 TRACKER_HOST = 'host.docker.internal:2600'
@@ -96,8 +96,9 @@ import requests
 class Authenticate(SimpleTask):
     def __init__(self):
         SimpleTask.__init__(self, 'Authenticate')
+        self._counter = 0
 
-    def process(self, item):
+    def _request(self):
         headers = {
             "Accept": "*/*",
             "Accept-Language": "en-US;q=0.5",
@@ -120,8 +121,15 @@ class Authenticate(SimpleTask):
         if res.status_code != 200:
             raise Exception("Failed to authenticate")
         r = res.json()
+        self.r = r
         print("Got auth response", r)
-        item['token'] = r['AuthenticationResult']['AccessToken']
+
+    def process(self, item):
+        if self._counter <= 0:
+            self._request()
+            self._counter = 5
+        item['token'] = self.r['AuthenticationResult']['AccessToken']
+        self._counter -= 1
 
 class PrepareDirectories(SimpleTask):
     def __init__(self, warc_prefix):
