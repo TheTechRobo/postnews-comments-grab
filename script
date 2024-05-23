@@ -1,2 +1,9 @@
+#!/bin/bash
+
+echo "Using $(pwd) to store data"
 docker build -t img . || exit 4
-docker run --add-host host.docker.internal:host-gateway -v "/home/thetechrobo/postnewscomments-grab/data:/finished" --rm img TheTechRobo --concurrent 1
+if [ ! -d "$(pwd)/data" ]; then
+	echo "Data dir does not exist"
+	exit 7;
+fi
+docker run --add-host host.docker.internal:host-gateway -v "$(pwd)/data:/finished" --rm img TheTechRobo --concurrent 1
