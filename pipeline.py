@@ -2,7 +2,7 @@
 
 with open("authorization") as file:
     auth: str = file.read().rstrip()
-assert auth.startswith("Authorization: Bearer ")
+assert auth.startswith("{") and auth.endswith("}")
 
 import seesaw
 from seesaw.project import *
@@ -28,7 +28,7 @@ project = Project()
 #
 # Update this each time you make a non-cosmetic change.
 # It will be added to the WARC files and reported to the tracker.
-VERSION = '20240521.04'
+VERSION = '20240522.02'
 #USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.183 Safari/537.36'
 TRACKER_ID = 'postnews'
 TRACKER_HOST = 'host.docker.internal:2600'
@@ -91,7 +91,37 @@ class CheckIP(SimpleTask):
         else:
             self._counter -= 1
 
+import requests
 
+class Authenticate(SimpleTask):
+    def __init__(self):
+        SimpleTask.__init__(self, 'Authenticate')
+
+    def process(self, item):
+        headers = {
+            "Accept": "*/*",
+            "Accept-Language": "en-US;q=0.5",
+            "Content-Type": "application/x-amz-json-1.1",
+            "Origin": "https://post.news",
+            "Priority": "u=4",
+            "Referer": "https://post.news",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "cross-site",
+            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:127.0) Gecko/20100101 Firefox/127.0",
+            "X-Amz-Target": "AWSCognitoIdentityProviderService.InitiateAuth",
+            "X-Amz-User-Agent": "aws-amplify/5.0.4 js"
+        }
+        res = requests.post(
+            "https://cognito-idp.us-east-1.amazonaws.com/",
+            headers=headers,
+            data=auth
+        )
+        if res.status_code != 200:
+            raise Exception("Failed to authenticate")
+        r = res.json()
+        print("Got auth response", r)
+        item['token'] = r['AuthenticationResult']['AccessToken']
 
 class PrepareDirectories(SimpleTask):
     def __init__(self, warc_prefix):
@@ -183,7 +213,7 @@ class WgetArgs(object):
             '--header', 'Sec-Fetch-Dest: empty',
             '--header', 'Sec-Fetch-Mode: cors',
             '--header', 'Sec-Fetch-Site: cross-site',
-            '--header', auth,
+            '--header', f"Authorization: Bearer {item['token']}",
             '-U', 'Mozilla/5.0 (Linux x86_64; rv:100.0) Gecko/20100101 Firefox/100.0 ; Operator: TheTechRobo thetechrobo@proton.me',
         ]
 
@@ -203,7 +233,7 @@ class WgetArgs(object):
                 raise TypeError("bad item type")
             item_urls.append(url)
             wget_args.append(url)
-        print(wget_args)
+        #print(wget_args)
 
         item['item_urls'] = item_urls
         item['custom_items'] = json.dumps(custom_items)
@@ -222,6 +252,7 @@ pipeline = Pipeline(
         GetItemFromTracker('http://{}/{}'
             .format(TRACKER_HOST, TRACKER_ID),
             downloader, VERSION),
+        Authenticate(),
         PrepareDirectories(warc_prefix='postnews-comments'),
         WgetDownload(
             WgetArgs(),
