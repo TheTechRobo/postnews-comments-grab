@@ -28,7 +28,7 @@ project = Project()
 #
 # Update this each time you make a non-cosmetic change.
 # It will be added to the WARC files and reported to the tracker.
-VERSION = '20240523.01'
+VERSION = '20240526.01'
 #USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.183 Safari/537.36'
 TRACKER_ID = 'postnews'
 TRACKER_HOST = 'host.docker.internal:2600'
@@ -122,10 +122,18 @@ class Authenticate(SimpleTask):
             raise Exception("Failed to authenticate")
         r = res.json()
         self.r = r
+        self.ltime = int(time.time())
         print("Got auth response", r)
 
     def process(self, item):
+        ctime = int(time.time())
+        diff = ctime - self.ltime
         if self._counter <= 0:
+            print("Redoing authentication")
+            self._request()
+            self._counter = 5
+        elif diff > 100:
+            print("Stale authentication")
             self._request()
             self._counter = 5
         item['token'] = self.r['AuthenticationResult']['AccessToken']
