@@ -25,7 +25,9 @@ wget.callbacks.httploop_result = function(url, err, http_stat)
 		return wget.actions.ABORT
 	end
 	if http_stat["statcode"] ~= 200 then
-		return wget.actions.ABORT
+		if http_stat["statcode"] ~= 404 then
+			return wget.actions.ABORT
+		end
 	end
 end
 
@@ -40,6 +42,10 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
 		local count = 0
 		io.stderr:write("This is a comment endpoint\n")
 		local decoded = JSON:decode(data)
+		if decoded["type"] == "NOT_FOUND" then
+			print("Looks like a 404. Marking as complete.")
+			return addedUrls
+		end
 		local discoveredPosts = {}
 		for _, comment in ipairs(decoded['items']) do
 			print(table.show(comment['postId'], "Discovered comment"))
